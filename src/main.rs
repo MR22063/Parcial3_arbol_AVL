@@ -64,9 +64,9 @@ fn insertar(nodo_opt: Option<Box<Nodo>>, vuelo: Vuelo) -> Box<Nodo> {
     if vuelo.altitud < nodo.vuelo.altitud {
         // nodo.izquierdo.take() mueve el hijo izquierdo temporalmente fuera del nodo
         // para ceder ownership a la llamada recursiva y luego reasignarlo.
-        nodo.izquierdo = Some(insertar(nodo.izquierdo.take(), vuelo));
+        nodo.izquierdo = Some(insertar(nodo.izquierdo.take(), vuelo.clone())); // BORRAR EL .CLONE
     } else if vuelo.altitud > nodo.vuelo.altitud {
-        nodo.derecho = Some(insertar(nodo.derecho.take(), vuelo));
+        nodo.derecho = Some(insertar(nodo.derecho.take(), vuelo.clone())); // BORRAR EL .CLONE
     } else {
         return nodo;
     }
@@ -95,6 +95,30 @@ fn insertar(nodo_opt: Option<Box<Nodo>>, vuelo: Vuelo) -> Box<Nodo> {
     }
     nodo
 }
+
+// FASE 2: Localización de Vuelos (60 min)
+fn buscar_vuelo(nodo: &Option<Box<Nodo>>, altitud: u32) -> Option<&Vuelo> {
+    // Evaluamos en qué estado está el nodo actual usando referencias
+    match nodo {
+        Some(n) => {
+            if altitud == n.vuelo.altitud {
+                // Si lo encontre, se devulve una referencia al vuelo
+                Some(&n.vuelo)
+            } else if altitud < n.vuelo.altitud {
+                // El vuelo buscado está más abajo, buscamos en la rama izquierda
+                buscar_vuelo(&n.izquierdo, altitud)
+            } else {
+                // El vuelo buscado está más arriba, buscamos en la rama derecha
+                buscar_vuelo(&n.derecho, altitud)
+            }
+        }
+        None => {
+            // Llegamos a una hoja vacía y no lo encontramos
+            None
+        }
+    }
+}
+
 fn main() {
     let mut radar: Option<Box<Nodo>> = None;
     // Simulación de entrada de vuelos
@@ -186,4 +210,23 @@ fn main() {
 
     println!("--- Radar de Control Aéreo (AVL) ---");
     // Aquí el estudiante debe invocar sus funciones de búsqueda y eliminación
+
+
+    // FASE 2: Inserción de Vuelos (30 min)
+    println!("\n--- FASE 2: Búsqueda de Vuelos ---");
+
+    // 1. Buscar un vuelo existente
+    let altitud_buscada = 4000;
+    match buscar_vuelo(&radar, altitud_buscada) {
+        Some(v) => println!("¡¡Alerta Radar!! Vuelo {} detectado a {} pies.", v.id, v.altitud),
+        None => println!("Espacio aéreo despejado a {} pies.", altitud_buscada),
+    }
+
+    // 2. Buscar un vuelo que no exista
+    let altitud_falsa = 9999;
+    match buscar_vuelo(&radar, altitud_falsa) {
+        Some(v) => println!("¡¡Alerta Radar!! Vuelo {} detectado a {} pies.", v.id, v.altitud),
+        None => println!("Espacio aéreo despejado a {} pies.", altitud_falsa),
+    }
+
 }
