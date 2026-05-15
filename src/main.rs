@@ -201,7 +201,35 @@ fn eliminar_vuelo(nodo_opt: Option<Box<Nodo>>, altitud: u32) -> Option<Box<Nodo>
     Some(nodo)
 }
 
+// FASE 4: Alerta de Colisión
+fn vuelos_en_rango(nodo: &Option<Box<Nodo>>, min: u32, max: u32) -> usize {
+    match nodo {
+        Some(n) => {
+            let mut contador = 0;
+            let altitud = n.vuelo.altitud;
 
+            // Si el vuelo actual está dentro del rango, lo sumamos
+            if altitud >= min && altitud <= max {
+                contador += 1;
+            }
+
+            // Si la altitud actual es MAYOR que el mínimo,
+            // significa que aún puede haber vuelos en rango hacia la izquierda.
+            if altitud > min {
+                contador += vuelos_en_rango(&n.izquierdo, min, max);
+            }
+
+            // Si la altitud actual es MENOR que el máximo,
+            // significa que aún puede haber vuelos en rango hacia la derecha.
+            if altitud < max {
+                contador += vuelos_en_rango(&n.derecho, min, max);
+            }
+
+            contador
+        }
+        None => 0,
+    }
+}
 
 fn main() {
     let mut radar: Option<Box<Nodo>> = None;
@@ -329,5 +357,11 @@ fn main() {
         Some(v) => println!("Error crítico: Vuelo {} sigue en radar a {} pies. (NO SE ELIMINO EL VUELO)", v.id, v.altitud),
         None => println!("Confirmado: El espacio aéreo en {} pies está despejado. (SE ELIMINO EL VUELO EXITOSAMENTE)", altitud_aterrizaje),
     }
+
+    println!("\n FASE 4: Alerta de Colisión (RANGO) ");
+    let min_peligro = 3000;
+    let max_peligro = 5000;
+    let vuelos_peligro = vuelos_en_rango(&radar, min_peligro, max_peligro);
+    println!("¡Alerta! Hay {} vuelos en la zona de peligro ({} - {} pies).", vuelos_peligro, min_peligro, max_peligro);
 
 }
